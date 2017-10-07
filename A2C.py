@@ -3,7 +3,6 @@
 # Changed to synchronous myself.
 
 import numpy as np
-import time, threading
 
 from keras.models import Model
 from keras.layers import Dense, Input
@@ -42,7 +41,6 @@ def policy_loss(actual_value, predicted_value):
 # ---------
 class Brain:
     train_queue = [[], [], [], [], []]  # s, a, r, s', s' terminal mask
-    lock_queue = threading.Lock()
 
     def __init__(self, name):
         self.model = self._build_model()
@@ -75,15 +73,14 @@ class Brain:
 
     def optimize(self):
         if len(self.train_queue[0]) < MIN_BATCH:
-            time.sleep(0)  # yield
             return
 
-        with self.lock_queue:
-            if len(self.train_queue[0]) < MIN_BATCH:  # more thread could have passed without lock
-                return  # we can't yield inside lock
 
-            s, a, r, s_, s_mask = self.train_queue
-            self.train_queue = [[], [], [], [], []]
+        if len(self.train_queue[0]) < MIN_BATCH:  # more thread could have passed without lock
+            return  # we can't yield inside lock
+
+        s, a, r, s_, s_mask = self.train_queue
+        self.train_queue = [[], [], [], [], []]
 
         s = np.vstack(s)
         a = np.vstack(a)
@@ -100,17 +97,16 @@ class Brain:
         # pickle.dump(self.model, open("C:/Users/Louis/Documents/OnFaitDuDeepLearningQuandMeme/" + self.name, mode='wb'))
 
     def train_push(self, s, a, r, s_):
-        with self.lock_queue:
-            self.train_queue[0].append(s)
-            self.train_queue[1].append(a)
-            self.train_queue[2].append(r)
+        self.train_queue[0].append(s)
+        self.train_queue[1].append(a)
+        self.train_queue[2].append(r)
 
-            if s_ is None:
-                self.train_queue[3].append(NONE_STATE)
-                self.train_queue[4].append(0.)
-            else:
-                self.train_queue[3].append(s_)
-                self.train_queue[4].append(1.)
+        if s_ is None:
+            self.train_queue[3].append(NONE_STATE)
+            self.train_queue[4].append(0.)
+        else:
+            self.train_queue[3].append(s_)
+            self.train_queue[4].append(1.)
         if len(self.train_queue[0]) > MIN_BATCH:
             self.optimize()
     def predict(self, s):
