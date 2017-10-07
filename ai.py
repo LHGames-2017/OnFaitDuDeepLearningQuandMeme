@@ -51,23 +51,29 @@ def deserialize_map(serialized_map):
 
     return deserialized_map
 
-def take_action(state, R):
-    return ENV_TEST.runStep(state, R)
+def take_action(state, R, to_house):
+    if to_house is True:
+        return ENV_HOUSE.runStep(state, R)
+    else:
+        return ENV_RES.runStep(state, R)
 
-def make_state_space(map, x, y):
+def make_state_space(map, x, y, to_house, p=None):
     state = []
     R = 15
     tmp_x, tmp_y = -1, -1
+
     for rows in map:
         for tile in rows:
             if tile.Content != None:
-                if tile.Content == 4:
-                    if math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2)) < R:
-                        tmp_x, tmp_y = tile.X, tile.Y
-                        R = math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2))
+                if to_house is False:
+                    if tile.Content == 4:
+                        if math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2)) < R:
+                            tmp_x, tmp_y = tile.X, tile.Y
+                            R = math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2))
 
                 state.append(tile.Content)
-
+    if to_house is True:
+        R = math.sqrt(math.pow(x - p['HouseLocation']['X'],2) + math.pow(y - p['HouseLocation']['Y'], 2))
     return state, R, tmp_x, tmp_y
 
 def bot():
@@ -75,7 +81,7 @@ def bot():
     Main de votre bot.
     """
     map_json = request.form["map"]
-    # print(map_json)
+    print(map_json)
     # Player info
 
     #encoded_map = map_json.encode()
@@ -87,16 +93,23 @@ def bot():
 
     serialized_map = map_json["CustomSerializedMap"]
     deserialized_map = deserialize_map(serialized_map)
-    state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y)
 
-    actions = take_action(state, R)
     ACTIONS_DICT = {0: create_move_action(Point(x, y + 1)),
                     1: create_move_action(Point(x + 1, y)),
                     2: create_move_action(Point(x, y - 1)),
                     3: create_move_action(Point(x - 1, y))}
-    if(R == 1):
-        print('collecting', p["TotalResources"])
-        return create_collect_action(Point(tmp_x, tmp_y))
+
+    if p["CarriedResources"] >= p["CarryingCapacity"]:
+        state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, True, p)
+        actions = take_action(state, R, True)
+        return ACTIONS_DICT[actions]
+    else:
+        state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, False)
+
+        actions = take_action(state, R, False)
+        if(R == 1):
+            print('collecting', p["TotalResources"])
+            return create_collect_action(Point(tmp_x, tmp_y))
     return ACTIONS_DICT[actions]
 
 @app.route("/", methods=["POST"])
@@ -107,8 +120,14 @@ def reponse():
     return bot()
 
 if __name__ == "__main__":
-    ENV_TEST = Environment()
-    brain = Brain()
-    ENV_TEST.make_agent(brain)
+    ENV_RES = Environment()
+    BRAIN_RES = Brain('ressource')
+    ENV_RES.make_agent(BRAIN_RES)
+
+    ENV_HOUSE = Environment()
+    BRAIN_HOUSE = Brain('maison')
+    ENV_HOUSE.make_agent(BRAIN_HOUSE)
+
+
 
     app.run(host="0.0.0.0", port=8080)

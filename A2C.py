@@ -3,18 +3,20 @@
 # Changed to synchronous myself.
 
 import numpy as np
-import gym, time, threading
+import time, threading
 
 from keras.models import Model
 from keras.layers import Dense, Input
 from keras import backend as K
 from keras.optimizers import RMSprop
 import numba
+import remote
+
 # -- constants
 ENV = 'CartPole-v1'
 RENDER = False
 
-GAMMA = 0.95
+GAMMA = 0.99
 
 N_STEP_RETURN = 10
 GAMMA_N = GAMMA ** N_STEP_RETURN
@@ -48,9 +50,9 @@ class Brain:
     train_queue = [[], [], [], [], []]  # s, a, r, s', s' terminal mask
     lock_queue = threading.Lock()
 
-    def __init__(self):
+    def __init__(self, name):
         self.model = self._build_model()
-
+        self.name = name
     def _build_model(self):
 
         state_input = Input(shape=(NUM_STATE,))
@@ -70,6 +72,7 @@ class Brain:
                                                  'mae'])
 
         model.summary()
+        # model.load_weights('weights')
 
         return model
 
@@ -98,6 +101,7 @@ class Brain:
         r = r + GAMMA_N * v * s_mask  # set v to 0 where s_ is terminal state
 
         self.model.train_on_batch([s, r], [a, v, r])
+        remote.store(self.model, self.name)
 
     def train_push(self, s, a, r, s_):
         with self.lock_queue:
@@ -202,6 +206,6 @@ class Environment():
 
         self.s = s_
         self.R += self.r
-        print(self.r, self.R)
+        #print(self.r, self.R)
         return a
 
