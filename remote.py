@@ -29,6 +29,7 @@ def put(resource, data):
     req = urllib.request.Request(url, data, method='PUT')
     response = urllib.request.urlopen(req)
     result = response.read()
+    #print(result)
     return result == b'Created'
 
 def store(state, name="state"):
