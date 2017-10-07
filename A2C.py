@@ -55,24 +55,26 @@ class Brain:
         self.name = name
     def _build_model(self):
 
-        state_input = Input(shape=(NUM_STATE,))
-        actual_value = Input(shape=(1,))
+        try:
+            model = remote.load(self.name)
+        except:
+            state_input = Input(shape=(NUM_STATE,))
+            actual_value = Input(shape=(1,))
 
-        x = Dense(64, activation='relu')(state_input)
-        x = Dense(64, activation='relu')(x)
-        # x = Dense(128, activation='relu')(x)
+            x = Dense(64, activation='relu')(state_input)
+            x = Dense(64, activation='relu')(x)
+            # x = Dense(128, activation='relu')(x)
 
-        out_actions = Dense(NUM_ACTIONS, activation='softmax')(x)
-        out_value = Dense(1)(x)
+            out_actions = Dense(NUM_ACTIONS, activation='softmax')(x)
+            out_value = Dense(1)(x)
 
-        model = Model(inputs=[state_input, actual_value], outputs=[out_actions, out_value , actual_value])
-        model.compile(optimizer=RMSprop(),
-                      loss=[policy_loss(actual_value=actual_value, predicted_value=out_value),
-                                                 value_loss(),
-                                                 'mae'])
+            model = Model(inputs=[state_input, actual_value], outputs=[out_actions, out_value , actual_value])
+            model.compile(optimizer=RMSprop(),
+                          loss=[policy_loss(actual_value=actual_value, predicted_value=out_value),
+                                                     value_loss(),
+                                                     'mae'])
 
-        model.summary()
-        # model.load_weights('weights')
+            model.summary()
 
         return model
 
@@ -206,6 +208,6 @@ class Environment():
 
         self.s = s_
         self.R += self.r
-        #print(self.r, self.R)
+        print(self.r, self.R)
         return a
 

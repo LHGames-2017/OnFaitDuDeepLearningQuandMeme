@@ -81,7 +81,7 @@ def bot():
     Main de votre bot.
     """
     map_json = request.form["map"]
-    print(map_json)
+    # print(map_json)
     # Player info
 
     #encoded_map = map_json.encode()

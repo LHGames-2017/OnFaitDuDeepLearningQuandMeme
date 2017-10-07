@@ -31,11 +31,9 @@ def put(resource, data):
     result = response.read()
     return result == b'Created'
 
-def store(state, name):
+def store(state, name="state"):
     put(name, pickle.dumps(state))
 
-def load():
-    data = get("state")
-    print("data", data)
+def load(name="state"):
+    data = get(name)
     return pickle.loads(data)
-    
