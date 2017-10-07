@@ -1,9 +1,12 @@
 from flask import Flask, request
 from structs import *
 import json
-import numpy
+import numba
+import math
+from A2C import Environment, Brain
 
 app = Flask(__name__)
+
 
 def create_action(action_type, target):
     actionContent = ActionContent(action_type, target.__dict__)
@@ -34,7 +37,7 @@ def deserialize_map(serialized_map):
     serialized_map = serialized_map[1:]
     rows = serialized_map.split('[')
     column = rows[0].split('{')
-    deserialized_map = [[Tile() for x in range(40)] for y in range(40)]
+    deserialized_map = [[Tile() for x in range(20)] for y in range(20)]
     for i in range(len(rows) - 1):
         column = rows[i + 1].split('{')
 
@@ -48,43 +51,47 @@ def deserialize_map(serialized_map):
 
     return deserialized_map
 
+def take_action(state, R):
+    return ENV_TEST.runStep(state, R)
+
+def make_state_space(map, x, y):
+    state = []
+    R = 15
+    for rows in map:
+        for tile in rows:
+            if tile.Content != None:
+                if tile.Content == 4:
+                    R = min(math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2)), R)
+                state.append(tile.Content)
+    return state, R
+
 def bot():
     """
     Main de votre bot.
     """
     map_json = request.form["map"]
-
+    print(map_json)
     # Player info
 
-    encoded_map = map_json.encode()
-    map_json = json.loads(encoded_map)
+    #encoded_map = map_json.encode()
+    map_json = json.loads(map_json)
     p = map_json["Player"]
     pos = p["Position"]
-    x = pos["X"]
-    y = pos["Y"]
-    house = p["HouseLocation"]
-    player = Player(p["Health"], p["MaxHealth"], Point(x,y),
-                    Point(house["X"], house["Y"]),
-                    p["CarriedResources"], p["CarryingCapacity"])
+    x = pos["X"] - 20
+    y = pos["Y"] - 20
 
-    # Map
     serialized_map = map_json["CustomSerializedMap"]
     deserialized_map = deserialize_map(serialized_map)
+    state, R = make_state_space(deserialized_map, x, y)
 
-    otherPlayers = []
-
-    for player_dict in map_json["OtherPlayers"]:
-        for player_name in player_dict.keys():
-            player_info = player_dict[player_name]
-            p_pos = player_info["Position"]
-            player_info = PlayerInfo(player_info["Health"],
-                                     player_info["MaxHealth"],
-                                     Point(p_pos["X"], p_pos["Y"]))
-
-            otherPlayers.append({player_name: player_info })
-
-    # return decision
-    return create_move_action(Point(0,1))
+    actions = take_action(state, R)
+    ACTIONS_DICT = {0: create_move_action(Point(x, y + 1)),
+                    1: create_move_action(Point(x + 1, y)),
+                    2: create_move_action(Point(x, y - 1)),
+                    3: create_move_action(Point(x - 1, y))}
+    print(ACTIONS_DICT[actions])
+    print(x, y)
+    return ACTIONS_DICT[actions]
 
 @app.route("/", methods=["POST"])
 def reponse():
@@ -94,4 +101,8 @@ def reponse():
     return bot()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=3000)
+    ENV_TEST = Environment()
+    brain = Brain()
+    ENV_TEST.make_agent(brain)
+
+    app.run(host="0.0.0.0", port=8080)
