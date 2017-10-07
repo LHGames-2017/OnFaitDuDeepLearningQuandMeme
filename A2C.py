@@ -46,13 +46,14 @@ class Brain:
     train_queue = [[], [], [], [], []]  # s, a, r, s', s' terminal mask
 
     def __init__(self, name):
-        self.model = self._build_model()
         self.name = name
+        self.model = self._build_model()
     def _build_model(self):
 
         try:
             model = load_model(os.getcwd() + '/' + self.name)
-        except:
+        except Exception as e:
+            print(e)
             state_input = Input(shape=(NUM_STATE,))
             actual_value = Input(shape=(1,))
 
