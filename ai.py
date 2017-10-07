@@ -2,7 +2,7 @@ from flask import Flask, request
 from structs import *
 import json
 import math
-from A2C import Environment, Brain
+#from A2C import Environment, Brain
 
 app = Flask(__name__)
 
@@ -110,13 +110,16 @@ def bot():
     x = pos["X"]
     y = pos["Y"]
 
-    serialized_map = map_json["CustomSerializedMap"]
-    deserialized_map = deserialize_map(serialized_map)
-
-    ai_is_best = True
-    if ai_is_best:
-        return ai_logic(p, x, y, deserialized_map)
-
+    print(x, y)
+    return create_move_action(Point(x-1, y))
+#
+#    serialized_map = map_json["CustomSerializedMap"]
+#    deserialized_map = deserialize_map(serialized_map)
+#
+#    ai_is_best = True
+#    if ai_is_best:
+#        return ai_logic(p, x, y, deserialized_map)
+#
 @app.route("/", methods=["POST"])
 def reponse():
     """
@@ -125,14 +128,13 @@ def reponse():
     return bot()
 
 if __name__ == "__main__":
-    ENV_RES = Environment()
-    BRAIN_RES = Brain('ressource')
-    ENV_RES.make_agent(BRAIN_RES)
-
-    ENV_HOUSE = Environment()
-    BRAIN_HOUSE = Brain('maison')
-    ENV_HOUSE.make_agent(BRAIN_HOUSE)
-
-
+#    ENV_RES = Environment()
+#    BRAIN_RES = Brain('ressource')
+#    ENV_RES.make_agent(BRAIN_RES)
+#
+#    ENV_HOUSE = Environment()
+#    BRAIN_HOUSE = Brain('maison')
+#    ENV_HOUSE.make_agent(BRAIN_HOUSE)
+#
 
     app.run(host="0.0.0.0", port=3000)
