@@ -76,6 +76,26 @@ def make_state_space(map, x, y, to_house, p=None):
         R = math.sqrt(math.pow(x - p['HouseLocation']['X'],2) + math.pow(y - p['HouseLocation']['Y'], 2))
     return state, R, tmp_x, tmp_y
 
+
+def ai_logic(p, x, y, deserialized_map):
+    ACTIONS_DICT = {0: create_move_action(Point(x, y + 1)),
+                    1: create_move_action(Point(x + 1, y)),
+                    2: create_move_action(Point(x, y - 1)),
+                    3: create_move_action(Point(x - 1, y))}
+
+    if p["CarriedResources"] >= p["CarryingCapacity"]:
+        state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, True, p)
+        actions = take_action(state, R, True)
+        return ACTIONS_DICT[actions]
+    else:
+        state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, False)
+
+        actions = take_action(state, R, False)
+        if (R == 1):
+            print('collecting', p["TotalResources"])
+            return create_collect_action(Point(tmp_x, tmp_y))
+    return ACTIONS_DICT[actions]
+
 def bot():
     """
     Main de votre bot.
@@ -94,23 +114,9 @@ def bot():
     serialized_map = map_json["CustomSerializedMap"]
     deserialized_map = deserialize_map(serialized_map)
 
-    ACTIONS_DICT = {0: create_move_action(Point(x, y + 1)),
-                    1: create_move_action(Point(x + 1, y)),
-                    2: create_move_action(Point(x, y - 1)),
-                    3: create_move_action(Point(x - 1, y))}
-
-    if p["CarriedResources"] >= p["CarryingCapacity"]:
-        state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, True, p)
-        actions = take_action(state, R, True)
-        return ACTIONS_DICT[actions]
-    else:
-        state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, False)
-
-        actions = take_action(state, R, False)
-        if(R == 1):
-            print('collecting', p["TotalResources"])
-            return create_collect_action(Point(tmp_x, tmp_y))
-    return ACTIONS_DICT[actions]
+    ai_is_best = True
+    if ai_is_best:
+        return ai_logic(p, x, y, deserialized_map)
 
 @app.route("/", methods=["POST"])
 def reponse():
