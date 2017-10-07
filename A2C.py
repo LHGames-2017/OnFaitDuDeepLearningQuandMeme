@@ -10,10 +10,6 @@ from keras.layers import Dense, Input
 from keras import backend as K
 from keras.optimizers import RMSprop
 
-# -- constants
-ENV = 'CartPole-v1'
-RENDER = False
-
 GAMMA = 0.95
 
 N_STEP_RETURN = 10
