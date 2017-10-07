@@ -3,6 +3,7 @@ from structs import *
 import json
 import math
 #from A2C import Environment, Brain
+from remote import *
 
 app = Flask(__name__)
 
@@ -111,6 +112,7 @@ def bot():
     y = pos["Y"]
 
     print(x, y)
+    store((x, y), "position")
     return create_move_action(Point(x-1, y))
 #
 #    serialized_map = map_json["CustomSerializedMap"]
