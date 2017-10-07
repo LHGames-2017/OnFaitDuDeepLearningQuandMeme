@@ -1,7 +1,8 @@
-from flask import Flask, request
+from flask import Flask, request, make_response
 from structs import *
 import json
 import numpy
+from simple import *
 
 app = Flask(__name__)
 
@@ -34,7 +35,7 @@ def deserialize_map(serialized_map):
     serialized_map = serialized_map[1:]
     rows = serialized_map.split('[')
     column = rows[0].split('{')
-    deserialized_map = [[Tile() for x in range(40)] for y in range(40)]
+    deserialized_map = [[Tile() for x in range(20)] for y in range(20)]
     for i in range(len(rows) - 1):
         column = rows[i + 1].split('{')
 
@@ -56,12 +57,13 @@ def bot():
 
     # Player info
 
-    encoded_map = map_json.encode()
+    encoded_map = map_json
     map_json = json.loads(encoded_map)
     p = map_json["Player"]
     pos = p["Position"]
     x = pos["X"]
     y = pos["Y"]
+    print(x, y)
     house = p["HouseLocation"]
     player = Player(p["Health"], p["MaxHealth"], Point(x,y),
                     Point(house["X"], house["Y"]),
@@ -70,21 +72,27 @@ def bot():
     # Map
     serialized_map = map_json["CustomSerializedMap"]
     deserialized_map = deserialize_map(serialized_map)
-
+    print_map(deserialized_map)
+    #print(BFS(deserialized_map, player.Position, find_minerals(deserialized_map, player.Position)))
     otherPlayers = []
 
     for player_dict in map_json["OtherPlayers"]:
         for player_name in player_dict.keys():
-            player_info = player_dict[player_name]
-            p_pos = player_info["Position"]
-            player_info = PlayerInfo(player_info["Health"],
-                                     player_info["MaxHealth"],
-                                     Point(p_pos["X"], p_pos["Y"]))
+            player_info = player_dict.get(player_name)
+            try:
+                p_pos = player_info["Position"]
+                player_info = PlayerInfo(player_info["Health"],
+                                         player_info["MaxHealth"],
+                                         Point(p_pos["X"], p_pos["Y"]))
 
-            otherPlayers.append({player_name: player_info })
-
+                otherPlayers.append({player_name: player_info })
+            except:
+                pass
+    print("Corner top left:")
+    print(deserialized_map[0][0].X, deserialized_map[0][0].Y)
     # return decision
-    return create_move_action(Point(0,1))
+    #res = flask.Response(resp, mimetype="text/plain")
+    return create_action("MoveAction", Point(player.Position.X, player.Position.Y - 1))
 
 @app.route("/", methods=["POST"])
 def reponse():
@@ -94,4 +102,4 @@ def reponse():
     return bot()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=3000)
+    app.run(host="0.0.0.0", port=8080)
