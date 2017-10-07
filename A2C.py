@@ -208,6 +208,6 @@ class Environment():
 
         self.s = s_
         self.R += self.r
-        print(self.r, self.R)
+        # print(self.r, self.R)
         return a
 

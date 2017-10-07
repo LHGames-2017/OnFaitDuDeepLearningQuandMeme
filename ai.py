@@ -101,10 +101,8 @@ def bot():
     Main de votre bot.
     """
     map_json = request.form["map"]
-    # print(map_json)
     # Player info
 
-    #encoded_map = map_json.encode()
     map_json = json.loads(map_json)
     p = map_json["Player"]
     pos = p["Position"]
