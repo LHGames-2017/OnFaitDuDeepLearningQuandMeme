@@ -24,16 +24,17 @@ def get(resource):
     result = response.read()
     return result
 
-def put(resource, data):
-    url = server + "/" + resource
-    req = urllib.request.Request(url, data, method='PUT')
-    response = urllib.request.urlopen(req)
-    result = response.read()
-    #print(result)
-    return result == b'Created'
-
 def store(state, name="state"):
-    put(name, pickle.dumps(state))
+    print('yo')
+    url = server + "/" + name
+    print(url)
+    req = urllib.request.Request(url, state, method='PUT')
+    print(req)
+    response = urllib.request.urlopen(req)
+    print(response)
+    result = response.read()
+    print(result)
+    return result == b'Created'
 
 def load(name="state"):
     data = get(name)

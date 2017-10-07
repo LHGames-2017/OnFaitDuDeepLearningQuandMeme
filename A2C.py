@@ -9,8 +9,6 @@ from keras.models import Model
 from keras.layers import Dense, Input
 from keras import backend as K
 from keras.optimizers import RMSprop
-import numba
-import remote
 
 # -- constants
 ENV = 'CartPole-v1'
@@ -18,7 +16,7 @@ RENDER = False
 
 GAMMA = 0.95
 
-N_STEP_RETURN = 5
+N_STEP_RETURN = 10
 GAMMA_N = GAMMA ** N_STEP_RETURN
 
 MIN_BATCH = 16
@@ -36,7 +34,7 @@ def value_loss():
 
 def policy_loss(actual_value, predicted_value):
     advantage = actual_value - predicted_value
-    advantage /= K.std(advantage)
+    # advantage /= K.std(advantage)
 
     def pol_loss(y_true, y_pred):
         log_prob = K.log(K.sum(y_pred * y_true, axis=1, keepdims=True) + 1e-10)
@@ -55,26 +53,26 @@ class Brain:
         self.name = name
     def _build_model(self):
 
-        try:
-            model = remote.load(self.name)
-        except:
-            state_input = Input(shape=(NUM_STATE,))
-            actual_value = Input(shape=(1,))
+        # try:
+        #     model = pickle.load(open("C:/Users/Louis/Documents/OnFaitDuDeepLearningQuandMeme/" + self.name, mode='rb'))
+        # except:
+        state_input = Input(shape=(NUM_STATE,))
+        actual_value = Input(shape=(1,))
 
-            x = Dense(64, activation='relu')(state_input)
-            x = Dense(64, activation='relu')(x)
-            # x = Dense(128, activation='relu')(x)
+        x = Dense(64, activation='relu')(state_input)
+        x = Dense(64, activation='relu')(x)
+        # x = Dense(128, activation='relu')(x)
 
-            out_actions = Dense(NUM_ACTIONS, activation='softmax')(x)
-            out_value = Dense(1)(x)
+        out_actions = Dense(NUM_ACTIONS, activation='softmax')(x)
+        out_value = Dense(1)(x)
 
-            model = Model(inputs=[state_input, actual_value], outputs=[out_actions, out_value , actual_value])
-            model.compile(optimizer=RMSprop(),
-                          loss=[policy_loss(actual_value=actual_value, predicted_value=out_value),
-                                                     value_loss(),
-                                                     'mae'])
+        model = Model(inputs=[state_input, actual_value], outputs=[out_actions, out_value , actual_value])
+        model.compile(optimizer=RMSprop(),
+                      loss=[policy_loss(actual_value=actual_value, predicted_value=out_value),
+                                                 value_loss(),
+                                                 'mae'])
 
-            model.summary()
+        # model.summary()
 
         return model
 
@@ -103,7 +101,7 @@ class Brain:
         r = r + GAMMA_N * v * s_mask  # set v to 0 where s_ is terminal state
 
         self.model.train_on_batch([s, r], [a, v, r])
-        remote.store(self.model, self.name)
+        # pickle.dump(self.model, open("C:/Users/Louis/Documents/OnFaitDuDeepLearningQuandMeme/" + self.name, mode='wb'))
 
     def train_push(self, s, a, r, s_):
         with self.lock_queue:
@@ -140,7 +138,6 @@ class Agent:
         self.memory = []
         self.R = 0.
 
-    @numba.jit
     def act(self, s):
         self.frames += 1
         s = np.array([s])
@@ -208,6 +205,6 @@ class Environment():
 
         self.s = s_
         self.R += self.r
-        # print(self.r, self.R)
+        print(self.r, self.R)
         return a
 

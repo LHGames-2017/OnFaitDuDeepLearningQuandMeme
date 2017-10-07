@@ -1,7 +1,6 @@
 from flask import Flask, request
 from structs import *
 import json
-import numba
 import math
 from A2C import Environment, Brain
 
@@ -84,16 +83,18 @@ def ai_logic(p, x, y, deserialized_map):
                     3: create_move_action(Point(x - 1, y))}
 
     if p["CarriedResources"] >= p["CarryingCapacity"]:
+        print('Maison')
         state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, True, p)
         actions = take_action(state, R, True)
         return ACTIONS_DICT[actions]
     else:
+        print('Ressource')
         state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, False)
-
-        actions = take_action(state, R, False)
         if (R == 1):
             print('collecting', p["TotalResources"])
             return create_collect_action(Point(tmp_x, tmp_y))
+
+        actions = take_action(state, R, False)
     return ACTIONS_DICT[actions]
 
 def bot():
