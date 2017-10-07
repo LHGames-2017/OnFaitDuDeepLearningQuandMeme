@@ -57,40 +57,46 @@ def take_action(state, R):
 def make_state_space(map, x, y):
     state = []
     R = 15
+    tmp_x, tmp_y = -1, -1
     for rows in map:
         for tile in rows:
             if tile.Content != None:
                 if tile.Content == 4:
-                    R = min(math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2)), R)
+                    if math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2)) < R:
+                        tmp_x, tmp_y = tile.X, tile.Y
+                        R = math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2))
+
                 state.append(tile.Content)
-    return state, R
+
+    return state, R, tmp_x, tmp_y
 
 def bot():
     """
     Main de votre bot.
     """
     map_json = request.form["map"]
-    print(map_json)
+    # print(map_json)
     # Player info
 
     #encoded_map = map_json.encode()
     map_json = json.loads(map_json)
     p = map_json["Player"]
     pos = p["Position"]
-    x = pos["X"] - 20
-    y = pos["Y"] - 20
+    x = pos["X"]
+    y = pos["Y"]
 
     serialized_map = map_json["CustomSerializedMap"]
     deserialized_map = deserialize_map(serialized_map)
-    state, R = make_state_space(deserialized_map, x, y)
+    state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y)
 
     actions = take_action(state, R)
     ACTIONS_DICT = {0: create_move_action(Point(x, y + 1)),
                     1: create_move_action(Point(x + 1, y)),
                     2: create_move_action(Point(x, y - 1)),
                     3: create_move_action(Point(x - 1, y))}
-    print(ACTIONS_DICT[actions])
-    print(x, y)
+    if(R == 1):
+        print('collecting', p["TotalResources"])
+        return create_collect_action(Point(tmp_x, tmp_y))
     return ACTIONS_DICT[actions]
 
 @app.route("/", methods=["POST"])
