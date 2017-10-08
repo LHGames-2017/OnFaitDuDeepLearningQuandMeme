@@ -59,17 +59,21 @@ def take_action(state, R, to_house):
 
 def make_state_space(map, x, y, to_house, p=None):
     state = []
-    R = 25
-    tmp_x, tmp_y = -1, -1
+    R = [25, 25]
+    tmp_x, tmp_y = [-1, -1], [-1, -1]
 
     for rows in map:
         for tile in rows:
             if tile.Content != None:
                 if to_house is False:
                     if tile.Content == 4:
-                        if math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2)) < R:
-                            tmp_x, tmp_y = tile.X, tile.Y
+                        if math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2)) < R[0]:
+                            tmp_x[0], tmp_y[0] = tile.X, tile.Y
                             R = math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2))
+                    if tile.Content == 1:
+                        if math.sqrt(math.pow(x - tile.X, 2) + math.pow(y - tile.Y, 2)) < R[1]:
+                            tmp_x[1], tmp_y[1] = tile.X, tile.Y
+                            R[1] = math.sqrt(math.pow(x - tile.X, 2) + math.pow(y - tile.Y, 2))
 
                 state.append(tile.Content)
     if to_house is True:
@@ -87,16 +91,19 @@ def ai_logic(p, x, y, deserialized_map):
     if p["CarriedResources"] >= p["CarryingCapacity"]:
         print('Maison')
         state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, True, p)
-        actions = take_action(state, R, True)
+        actions = take_action(state, R[0], True)
         # while walkable(ACTIONS_DICT[actions]) is False:
         #     actions = random.randint(0, 3)
         return ACTIONS_DICT[actions]
     else:
         print('Ressource')
         state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, False)
-        if (R == 1):
+        if (R[0] == 1):
             print('collecting', p["TotalResources"])
-            return create_collect_action(Point(tmp_x, tmp_y))
+            return create_collect_action(Point(tmp_x[0], tmp_y[0]))
+        if (R[1] == 1):
+            print('killing wood')
+            return create_attack_action(Point(tmp_x[1], tmp_y[1]))
 
         actions = take_action(state, R, False)
     return ACTIONS_DICT[actions]
