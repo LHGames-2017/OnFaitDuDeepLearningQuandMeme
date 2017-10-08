@@ -54,7 +54,8 @@ def deserialize_map(serialized_map):
 def take_action(state, R):
     return ENV_RES.runStep(state, R)
 
-def make_state_space(map, x, y, p=None):
+# O
+def make_state_space(map, x, y):
     state = []
     R = [25, 25]
     tmp_x, tmp_y = [-1, -1], [-1, -1]
@@ -63,9 +64,9 @@ def make_state_space(map, x, y, p=None):
         for tile in rows:
             if tile.Content != None:
                 if tile.Content == 6:
-                    if math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2)) < R[0]:
+                    if (math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2)) < R[0]) & (math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2)) > 0):
                         tmp_x[0], tmp_y[0] = tile.X, tile.Y
-                        R = math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2))
+                        R[0] = math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2))
                 if tile.Content == 1:
                     if math.sqrt(math.pow(x - tile.X, 2) + math.pow(y - tile.Y, 2)) < R[1]:
                         tmp_x[1], tmp_y[1] = tile.X, tile.Y
@@ -75,25 +76,31 @@ def make_state_space(map, x, y, p=None):
 
     return state, R, tmp_x, tmp_y
 
+# L'algorithme de Deep Reinforcement Learning de style A2C https://blog.openai.com/baselines-acktr-a2c/
+# Apprend a ce rapprocher de joueur sur la carte, recevant des recompenses lorsqu'il s'en rapproche et
+# attaquant tout mur ou joueur etant suffisament proche.
 
-def ai_logic(p, x, y, deserialized_map):
+# Il s'agit de mon implementation de l'algorithme a partir de la base d'un autre algorithme de deep reinforcement learning
+
+def ai_logic(x, y, deserialized_map):
 
     ACTIONS_DICT = {0: create_move_action(Point(x, y + 1)),
                     1: create_move_action(Point(x + 1, y)),
                     2: create_move_action(Point(x, y - 1)),
                     3: create_move_action(Point(x - 1, y))}
-
-    state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, p)
+    state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y)
+    print(R)
     if (R[0] == 1):
-        print('killing')
+        print('killing player')
         return create_attack_action(Point(tmp_x[0], tmp_y[0]))
-    if (R[1] == 1):
+    elif (R[1] == 1):
         print('killing wood')
         return create_attack_action(Point(tmp_x[1], tmp_y[1]))
-
-    actions = take_action(state, R[0])
-    print(ACTIONS_DICT[actions])
-    return ACTIONS_DICT[actions]
+    else:
+        actions = take_action(state, R)
+        print('stalking player')
+        print(ACTIONS_DICT[actions])
+        return ACTIONS_DICT[actions]
 
 def bot():
     """
@@ -110,10 +117,7 @@ def bot():
 
     serialized_map = map_json["CustomSerializedMap"]
     deserialized_map = deserialize_map(serialized_map)
-    ai_is_best = True
-    print(x, y)
-    if ai_is_best:
-       return ai_logic(p, x, y, deserialized_map)
+    return ai_logic(x, y, deserialized_map)
 
 @app.route("/", methods=["POST"])
 def reponse():
@@ -124,7 +128,7 @@ def reponse():
 
 if __name__ == "__main__":
     ENV_RES = Environment()
-    BRAIN_RES = Brain('ressource')
+    BRAIN_RES = Brain('killer')
     ENV_RES.make_agent(BRAIN_RES)
 
     app.run(host="0.0.0.0", port=8080)
