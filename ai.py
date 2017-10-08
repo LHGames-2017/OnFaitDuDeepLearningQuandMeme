@@ -57,7 +57,7 @@ def take_action(state, R, to_house):
     else:
         return ENV_RES.runStep(state, R)
 
-def make_state_space(map, x, y, to_house, p=None):
+def make_state_space(map, x, y, p=None):
     state = []
     R = [25, 25]
     tmp_x, tmp_y = [-1, -1], [-1, -1]
@@ -65,19 +65,17 @@ def make_state_space(map, x, y, to_house, p=None):
     for rows in map:
         for tile in rows:
             if tile.Content != None:
-                if to_house is False:
-                    if tile.Content == 4:
-                        if math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2)) < R[0]:
-                            tmp_x[0], tmp_y[0] = tile.X, tile.Y
-                            R = math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2))
-                    if tile.Content == 1:
-                        if math.sqrt(math.pow(x - tile.X, 2) + math.pow(y - tile.Y, 2)) < R[1]:
-                            tmp_x[1], tmp_y[1] = tile.X, tile.Y
-                            R[1] = math.sqrt(math.pow(x - tile.X, 2) + math.pow(y - tile.Y, 2))
+                if tile.Content == 6:
+                    if math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2)) < R[0]:
+                        tmp_x[0], tmp_y[0] = tile.X, tile.Y
+                        R = math.sqrt(math.pow(x - tile.X,2) + math.pow(y - tile.Y, 2))
+                if tile.Content == 1:
+                    if math.sqrt(math.pow(x - tile.X, 2) + math.pow(y - tile.Y, 2)) < R[1]:
+                        tmp_x[1], tmp_y[1] = tile.X, tile.Y
+                        R[1] = math.sqrt(math.pow(x - tile.X, 2) + math.pow(y - tile.Y, 2))
 
                 state.append(tile.Content)
-    if to_house is True:
-        R = math.sqrt(math.pow(x - p['HouseLocation']['X'],2) + math.pow(y - p['HouseLocation']['Y'], 2))
+
     return state, R, tmp_x, tmp_y
 
 
@@ -88,29 +86,17 @@ def ai_logic(p, x, y, deserialized_map):
                     2: create_move_action(Point(x, y - 1)),
                     3: create_move_action(Point(x - 1, y))}
 
-    if p["CarriedResources"] >= p["CarryingCapacity"]:
-        print('Maison')
-        state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, True, p)
-        actions = take_action(state, R[0], True)
-        # while walkable(ACTIONS_DICT[actions]) is False:
-        #     actions = random.randint(0, 3)
-        return ACTIONS_DICT[actions]
-    else:
-        print('Ressource')
-        state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, False)
-        if (R[0] == 1):
-            print('collecting', p["TotalResources"])
-            return create_collect_action(Point(tmp_x[0], tmp_y[0]))
-        if (R[1] == 1):
-            print('killing wood')
-            return create_attack_action(Point(tmp_x[1], tmp_y[1]))
+    print('Ressource')
+    state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, False)
+    if (R[0] == 1):
+        print('collecting', p["TotalResources"])
+        return create_collect_action(Point(tmp_x[0], tmp_y[0]))
+    if (R[1] == 1):
+        print('killing wood')
+        return create_attack_action(Point(tmp_x[1], tmp_y[1]))
 
-        actions = take_action(state, R, False)
+    actions = take_action(state, R, False)
     return ACTIONS_DICT[actions]
-
-def walkable(pos):
-    if pos.Content in [TileContent.House, TileContent.Lava, TileContent.Shop, TileContent.Wall]:
-        return False
 
 def bot():
     """
@@ -142,10 +128,5 @@ if __name__ == "__main__":
     ENV_RES = Environment()
     BRAIN_RES = Brain('ressource')
     ENV_RES.make_agent(BRAIN_RES)
-
-    ENV_HOUSE = Environment()
-    BRAIN_HOUSE = Brain('maison')
-    ENV_HOUSE.make_agent(BRAIN_HOUSE)
-
 
     app.run(host="0.0.0.0", port=3000)
