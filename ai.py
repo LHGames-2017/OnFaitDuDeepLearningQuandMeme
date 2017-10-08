@@ -51,11 +51,8 @@ def deserialize_map(serialized_map):
 
     return deserialized_map
 
-def take_action(state, R, to_house):
-    if to_house is True:
-        return ENV_HOUSE.runStep(state, R)
-    else:
-        return ENV_RES.runStep(state, R)
+def take_action(state, R):
+    return ENV_RES.runStep(state, R)
 
 def make_state_space(map, x, y, p=None):
     state = []
@@ -87,15 +84,15 @@ def ai_logic(p, x, y, deserialized_map):
                     3: create_move_action(Point(x - 1, y))}
 
     print('Ressource')
-    state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, False)
+    state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, p)
     if (R[0] == 1):
-        print('collecting', p["TotalResources"])
-        return create_collect_action(Point(tmp_x[0], tmp_y[0]))
+        print('killing')
+        return create_attack_action(Point(tmp_x[0], tmp_y[0]))
     if (R[1] == 1):
         print('killing wood')
         return create_attack_action(Point(tmp_x[1], tmp_y[1]))
 
-    actions = take_action(state, R, False)
+    actions = take_action(state, R)
     return ACTIONS_DICT[actions]
 
 def bot():
