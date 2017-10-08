@@ -90,7 +90,6 @@ def ai_logic(x, y, deserialized_map):
                     2: create_move_action(Point(x, y - 1)),
                     3: create_move_action(Point(x - 1, y))}
     state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y)
-    print(R)
     if (R[0] == 1):
         print('killing player')
         return create_attack_action(Point(tmp_x[0], tmp_y[0]))
@@ -98,7 +97,7 @@ def ai_logic(x, y, deserialized_map):
         print('killing wood')
         return create_attack_action(Point(tmp_x[1], tmp_y[1]))
     else:
-        actions = take_action(state, R)
+        actions = take_action(state, R[0])
         print('stalking player')
         print(ACTIONS_DICT[actions])
         return ACTIONS_DICT[actions]
