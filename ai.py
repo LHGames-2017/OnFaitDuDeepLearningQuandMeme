@@ -83,7 +83,6 @@ def ai_logic(p, x, y, deserialized_map):
                     2: create_move_action(Point(x, y - 1)),
                     3: create_move_action(Point(x - 1, y))}
 
-    print('Ressource')
     state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, p)
     if (R[0] == 1):
         print('killing')
@@ -92,7 +91,8 @@ def ai_logic(p, x, y, deserialized_map):
         print('killing wood')
         return create_attack_action(Point(tmp_x[1], tmp_y[1]))
 
-    actions = take_action(state, R)
+    actions = take_action(state, R[0])
+    print(ACTIONS_DICT[actions])
     return ACTIONS_DICT[actions]
 
 def bot():
@@ -111,6 +111,7 @@ def bot():
     serialized_map = map_json["CustomSerializedMap"]
     deserialized_map = deserialize_map(serialized_map)
     ai_is_best = True
+    print(x, y)
     if ai_is_best:
        return ai_logic(p, x, y, deserialized_map)
 
@@ -126,4 +127,4 @@ if __name__ == "__main__":
     BRAIN_RES = Brain('ressource')
     ENV_RES.make_agent(BRAIN_RES)
 
-    app.run(host="0.0.0.0", port=3000)
+    app.run(host="0.0.0.0", port=8080)
