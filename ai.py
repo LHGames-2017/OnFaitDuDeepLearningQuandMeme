@@ -120,10 +120,9 @@ def bot():
 
     serialized_map = map_json["CustomSerializedMap"]
     deserialized_map = deserialize_map(serialized_map)
-    return create_move_action(Point(x, y -1))
-    # ai_is_best = True
-    # if ai_is_best:
-    #    return ai_logic(p, x, y, deserialized_map)
+    ai_is_best = True
+    if ai_is_best:
+       return ai_logic(p, x, y, deserialized_map)
 
 @app.route("/", methods=["POST"])
 def reponse():
