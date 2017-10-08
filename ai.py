@@ -3,6 +3,7 @@ from structs import *
 import json
 import math
 from A2C import Environment, Brain
+import random
 
 app = Flask(__name__)
 
@@ -58,7 +59,7 @@ def take_action(state, R, to_house):
 
 def make_state_space(map, x, y, to_house, p=None):
     state = []
-    R = 15
+    R = 25
     tmp_x, tmp_y = -1, -1
 
     for rows in map:
@@ -77,6 +78,7 @@ def make_state_space(map, x, y, to_house, p=None):
 
 
 def ai_logic(p, x, y, deserialized_map):
+
     ACTIONS_DICT = {0: create_move_action(Point(x, y + 1)),
                     1: create_move_action(Point(x + 1, y)),
                     2: create_move_action(Point(x, y - 1)),
@@ -86,6 +88,8 @@ def ai_logic(p, x, y, deserialized_map):
         print('Maison')
         state, R, tmp_x, tmp_y = make_state_space(deserialized_map, x, y, True, p)
         actions = take_action(state, R, True)
+        # while walkable(ACTIONS_DICT[actions]) is False:
+        #     actions = random.randint(0, 3)
         return ACTIONS_DICT[actions]
     else:
         print('Ressource')
@@ -96,6 +100,10 @@ def ai_logic(p, x, y, deserialized_map):
 
         actions = take_action(state, R, False)
     return ACTIONS_DICT[actions]
+
+def walkable(pos):
+    if pos.Content in [TileContent.House, TileContent.Lava, TileContent.Shop, TileContent.Wall]:
+        return False
 
 def bot():
     """
@@ -134,4 +142,4 @@ if __name__ == "__main__":
     ENV_HOUSE.make_agent(BRAIN_HOUSE)
 
 
-    app.run(host="0.0.0.0", port=3000)
+    app.run(host="0.0.0.0", port=8080)
