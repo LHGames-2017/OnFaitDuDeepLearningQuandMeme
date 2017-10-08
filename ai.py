@@ -51,10 +51,11 @@ def deserialize_map(serialized_map):
 
     return deserialized_map
 
+
 def take_action(state, R):
     return ENV_RES.runStep(state, R)
 
-# O
+
 def make_state_space(map, x, y):
     state = []
     R = [25, 25]
@@ -131,4 +132,4 @@ if __name__ == "__main__":
     BRAIN_RES = Brain('killer')
     ENV_RES.make_agent(BRAIN_RES)
 
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=3000)
