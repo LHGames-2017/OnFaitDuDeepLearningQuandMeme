@@ -50,28 +50,21 @@ class Brain:
         self.model = self._build_model()
     def _build_model(self):
 
-        try:
-            model = load_model(os.getcwd() + '/' + self.name)
-        except Exception as e:
-            print(e)
-            state_input = Input(shape=(NUM_STATE,))
-            actual_value = Input(shape=(1,))
+        state_input = Input(shape=(NUM_STATE,))
+        actual_value = Input(shape=(1,))
 
-            x = Dense(64, activation='relu')(state_input)
-            x = Dense(64, activation='relu')(x)
-            # x = Dense(128, activation='relu')(x)
+        x = Dense(64, activation='relu')(state_input)
+        x = Dense(64, activation='relu')(x)
+        # x = Dense(128, activation='relu')(x)
 
-            out_actions = Dense(NUM_ACTIONS, activation='softmax')(x)
-            out_value = Dense(1)(x)
+        out_actions = Dense(NUM_ACTIONS, activation='softmax')(x)
+        out_value = Dense(1)(x)
 
-            model = Model(inputs=[state_input, actual_value], outputs=[out_actions, out_value , actual_value])
-            model.compile(optimizer=RMSprop(),
-                          loss=[policy_loss(actual_value=actual_value, predicted_value=out_value),
-                                                     value_loss(),
-                                                     'mae'])
-
-            # model.summary()
-
+        model = Model(inputs=[state_input, actual_value], outputs=[out_actions, out_value , actual_value])
+        model.compile(optimizer='adam',
+                      loss=[policy_loss(actual_value=actual_value, predicted_value=out_value),
+                                                 value_loss(),
+                                                 'mae'])
         return model
 
 
@@ -98,10 +91,6 @@ class Brain:
         r = r + GAMMA_N * v * s_mask  # set v to 0 where s_ is terminal state
 
         self.model.train_on_batch([s, r], [a, v, r])
-        try:
-            self.model.save(os.getcwd() + '/' + self.name)
-        except Exception as e:
-            print(e, 'pickling')
     def train_push(self, s, a, r, s_):
         self.train_queue[0].append(s)
         self.train_queue[1].append(a)
