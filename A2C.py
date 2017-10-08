@@ -53,8 +53,8 @@ class Brain:
         state_input = Input(shape=(NUM_STATE,))
         actual_value = Input(shape=(1,))
 
-        x = Dense(64, activation='relu')(state_input)
-        x = Dense(64, activation='relu')(x)
+        x = Dense(32, activation='relu')(state_input)
+        # x = Dense(64, activation='relu')(x)
         # x = Dense(128, activation='relu')(x)
 
         out_actions = Dense(NUM_ACTIONS, activation='softmax')(x)
@@ -183,7 +183,8 @@ class Environment():
         self.agent = Agent(brain)
 
     def runStep(self, s_, r):
-        self.r = self.old_r - r
+
+        self.r = (self.old_r - r) / self.old_r
         self.old_r = r
 
         a = self.agent.act(self.s)
